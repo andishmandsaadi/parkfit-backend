@@ -10,6 +10,7 @@ import plansRouter from "./routes/plans";
 import contactRouter from "./routes/contact";
 import campaignsRouter from "./routes/campaigns";
 import trainersRouter from "./routes/trainers";
+import classesRouter from "./routes/classes";
 import adminRouter from "./routes/admin";
 import { errorHandler } from "./middleware/errorHandler";
 
@@ -75,6 +76,7 @@ app.use("/api/plans", plansRouter);
 app.use("/api/contact", contactRouter);
 app.use("/api/campaigns", campaignsRouter);
 app.use("/api/trainers", trainersRouter);
+app.use("/api/classes", classesRouter);
 app.use("/api/admin", adminRouter);
 
 app.use((_req, res) => res.status(404).json({ message: "Not found." }));
