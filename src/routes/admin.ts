@@ -115,22 +115,43 @@ router.get("/plans", requireAdmin, async (_req, res: any) => {
   return res.json(r.rows);
 });
 
+router.post("/plans", requireAdmin,
+  [body("name_tr").notEmpty(), body("name_en").notEmpty(), body("price_try").isNumeric()],
+  async (req: AdminRequest, res: any) => {
+    const { name_tr, name_en, price_try, features = [], features_en = [], is_popular = false, active = true } = req.body;
+    try {
+      const r = await pool.query(
+        `INSERT INTO plans (name_tr,name_en,price_try,features,features_en,is_popular,active) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+        [name_tr, name_en, price_try, JSON.stringify(features), JSON.stringify(features_en), is_popular, active]
+      );
+      return res.status(201).json(r.rows[0]);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Oluşturma başarısız." });
+    }
+  }
+);
+
 router.put("/plans/:id", requireAdmin,
   [body("price_try").optional().isNumeric(), body("is_popular").optional().isBoolean()],
   async (req: AdminRequest, res: any) => {
     const { id } = req.params;
-    const { name_tr, name_en, price_try, features, is_popular, active } = req.body;
+    const { name_tr, name_en, price_try, features, features_en, is_popular, active } = req.body;
     try {
       const r = await pool.query(
         `UPDATE plans SET
-           name_tr    = COALESCE($1, name_tr),
-           name_en    = COALESCE($2, name_en),
-           price_try  = COALESCE($3, price_try),
-           features   = COALESCE($4, features),
-           is_popular = COALESCE($5, is_popular),
-           active     = COALESCE($6, active)
-         WHERE id=$7 RETURNING *`,
-        [name_tr, name_en, price_try, features ? JSON.stringify(features) : null, is_popular, active, id]
+           name_tr     = COALESCE($1, name_tr),
+           name_en     = COALESCE($2, name_en),
+           price_try   = COALESCE($3, price_try),
+           features    = COALESCE($4, features),
+           features_en = COALESCE($5, features_en),
+           is_popular  = COALESCE($6, is_popular),
+           active      = COALESCE($7, active)
+         WHERE id=$8 RETURNING *`,
+        [name_tr, name_en, price_try,
+         features ? JSON.stringify(features) : null,
+         features_en ? JSON.stringify(features_en) : null,
+         is_popular, active, id]
       );
       if (!r.rows.length) return res.status(404).json({ message: "Plan bulunamadı." });
       return res.json(r.rows[0]);
@@ -140,6 +161,11 @@ router.put("/plans/:id", requireAdmin,
     }
   }
 );
+
+router.delete("/plans/:id", requireAdmin, async (req: AdminRequest, res: any) => {
+  await pool.query("DELETE FROM plans WHERE id=$1", [req.params.id]);
+  return res.json({ ok: true });
+});
 
 // ── Classes ───────────────────────────────────────────────────────────────────
 router.get("/classes", requireAdmin, async (_req, res: any) => {

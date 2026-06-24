@@ -9,10 +9,12 @@ CREATE TABLE IF NOT EXISTS plans (
   name_en      VARCHAR(50)    NOT NULL,
   price_try    NUMERIC(8,2)   NOT NULL,
   features     JSONB          NOT NULL DEFAULT '[]',
+  features_en  JSONB          NOT NULL DEFAULT '[]',
   is_popular   BOOLEAN        NOT NULL DEFAULT false,
   active       BOOLEAN        NOT NULL DEFAULT true,
   created_at   TIMESTAMPTZ    NOT NULL DEFAULT NOW()
 );
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS features_en JSONB NOT NULL DEFAULT '[]';
 
 -- Classes
 CREATE TABLE IF NOT EXISTS classes (
