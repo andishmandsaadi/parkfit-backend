@@ -343,6 +343,54 @@ router.delete("/gallery/:id", requireAdmin, async (req: AdminRequest, res: any) 
   return res.json({ ok: true });
 });
 
+// ── Testimonials ─────────────────────────────────────────────────────────────
+router.get("/testimonials", requireAdmin, async (_req, res: any) => {
+  const r = await pool.query("SELECT * FROM testimonials ORDER BY sort_order, id");
+  return res.json(r.rows);
+});
+
+router.post("/testimonials", requireAdmin,
+  [body("author").notEmpty(), body("text_tr").notEmpty(), body("text_en").notEmpty()],
+  async (req: AdminRequest, res: any) => {
+    const { author, text_tr, text_en, sort_order = 0, active = true } = req.body;
+    try {
+      const r = await pool.query(
+        "INSERT INTO testimonials (author,text_tr,text_en,sort_order,active) VALUES ($1,$2,$3,$4,$5) RETURNING *",
+        [author, text_tr, text_en, sort_order, active]
+      );
+      return res.status(201).json(r.rows[0]);
+    } catch (err) {
+      return res.status(500).json({ message: "Oluşturma başarısız." });
+    }
+  }
+);
+
+router.put("/testimonials/:id", requireAdmin, async (req: AdminRequest, res: any) => {
+  const { id } = req.params;
+  const { author, text_tr, text_en, sort_order, active } = req.body;
+  try {
+    const r = await pool.query(
+      `UPDATE testimonials SET
+         author     = COALESCE($1, author),
+         text_tr    = COALESCE($2, text_tr),
+         text_en    = COALESCE($3, text_en),
+         sort_order = COALESCE($4, sort_order),
+         active     = COALESCE($5, active)
+       WHERE id=$6 RETURNING *`,
+      [author, text_tr, text_en, sort_order, active, id]
+    );
+    if (!r.rows.length) return res.status(404).json({ message: "Yorum bulunamadı." });
+    return res.json(r.rows[0]);
+  } catch (err) {
+    return res.status(500).json({ message: "Güncelleme başarısız." });
+  }
+});
+
+router.delete("/testimonials/:id", requireAdmin, async (req: AdminRequest, res: any) => {
+  await pool.query("DELETE FROM testimonials WHERE id=$1", [req.params.id]);
+  return res.json({ ok: true });
+});
+
 // ── Contact messages ──────────────────────────────────────────────────────────
 router.get("/messages", requireAdmin, async (_req, res: any) => {
   const r = await pool.query("SELECT * FROM contact_messages ORDER BY created_at DESC");

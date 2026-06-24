@@ -78,6 +78,16 @@ CREATE TABLE IF NOT EXISTS site_settings (
   updated_at    TIMESTAMPTZ    NOT NULL DEFAULT NOW()
 );
 
+-- Testimonials
+CREATE TABLE IF NOT EXISTS testimonials (
+  id          SERIAL PRIMARY KEY,
+  author      VARCHAR(100)  NOT NULL,
+  text_tr     TEXT          NOT NULL DEFAULT '',
+  text_en     TEXT          NOT NULL DEFAULT '',
+  active      BOOLEAN       NOT NULL DEFAULT true,
+  sort_order  INT           NOT NULL DEFAULT 0
+);
+
 -- Gallery images
 CREATE TABLE IF NOT EXISTS gallery_images (
   id            SERIAL PRIMARY KEY,
@@ -165,6 +175,23 @@ async function migrate() {
       }
     }
 
+    // Seed testimonials
+    const testiSeeds = [
+      { author: "Burak K.", text_tr: "Sabahlarımı değiştirdi. Buradaki enerjinin eşi yok.", text_en: "Changed my mornings. The energy here is unmatched." },
+      { author: "Elif T.",  text_tr: "Şehrin en iyi antrenörleri. 4 ayda 12 kilo verdim.", text_en: "Best trainers in the city. I lost 12kg in 4 months." },
+      { author: "Ozan M.",  text_tr: "Premium hizmet, samimi atmosfer. Tavsiye ederim.", text_en: "Premium service, genuine atmosphere. Highly recommend." },
+    ];
+    for (let i = 0; i < testiSeeds.length; i++) {
+      const t = testiSeeds[i];
+      const exists = await client.query("SELECT 1 FROM testimonials WHERE author=$1", [t.author]);
+      if (!exists.rows.length) {
+        await client.query(
+          "INSERT INTO testimonials (author, text_tr, text_en, sort_order) VALUES ($1,$2,$3,$4)",
+          [t.author, t.text_tr, t.text_en, i]
+        );
+      }
+    }
+
     // Seed site settings (only insert if key doesn't exist)
     const settingsSeeds: Record<string, string> = {
       // Contact / footer
@@ -201,8 +228,8 @@ async function migrate() {
       cta_desc_en: "Join today and try your first week free.",
       cta_img_url: "/assets/cta-join.jpg",
       // About page
-      about_story_tr: "2012 yılında kurulan ParkFit, Kadıköy'ün kalbinde premium bir fitness deneyimi sunmaktadır. Misyonumuz, her bireyin potansiyelini en üst düzeye çıkarmasına yardımcı olmak.",
-      about_story_en: "Founded in 2012, ParkFit offers a premium fitness experience in the heart of Kadıköy. Our mission is to help every individual reach their full potential.",
+      about_story_tr: "2012 yılında kurulan Premium Fitness Club, Kadıköy'ün kalbinde premium bir fitness deneyimi sunmaktadır. Misyonumuz, her bireyin potansiyelini en üst düzeye çıkarmasına yardımcı olmak.",
+      about_story_en: "Founded in 2012, Premium Fitness Club offers a premium fitness experience in the heart of Kadıköy. Our mission is to help every individual reach their full potential.",
       about_mission_tr: "Her üyenin hedeflerine ulaşmasını sağlayan kişiselleştirilmiş antrenman programları sunmak.",
       about_mission_en: "To provide personalised training programmes that help every member reach their goals.",
       about_vision_tr: "Türkiye'nin en yenilikçi ve ilham verici fitness topluluğunu oluşturmak.",

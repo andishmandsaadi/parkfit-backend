@@ -26,6 +26,8 @@ const allowedOrigins = [
   process.env.FRONTEND_URL ?? "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:5173",
+  "https://premiumfitnessclub.com",
+  "https://www.premiumfitnessclub.com",
 ];
 app.use(
   cors({
@@ -72,6 +74,17 @@ app.get("/api/gallery", async (_req, res) => {
   }
 });
 
+// Public testimonials endpoint
+app.get("/api/testimonials", async (_req, res) => {
+  try {
+    const r = await pool.query("SELECT * FROM testimonials WHERE active=true ORDER BY sort_order, id");
+    res.json(r.rows);
+  } catch (err) {
+    console.error("/api/testimonials error:", err);
+    res.json([]);
+  }
+});
+
 app.use("/api/plans", plansRouter);
 app.use("/api/contact", contactRouter);
 app.use("/api/campaigns", campaignsRouter);
@@ -83,7 +96,7 @@ app.use((_req, res) => res.status(404).json({ message: "Not found." }));
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`✅ ParkFit API running on http://localhost:${PORT}`);
+  console.log(`✅ Premium Fitness Club API running on http://localhost:${PORT}`);
   console.log(`   Health: http://localhost:${PORT}/health`);
 });
 
